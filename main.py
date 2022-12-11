@@ -1,11 +1,14 @@
+import os.path
 import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
+
 from PIL import Image, ImageTk
 import numpy as np
 import cv2
 from dewarping import Dewarping
-import PIL.Image
+
+out_image = None
 
 
 class ExampleApp(Frame):
@@ -13,7 +16,7 @@ class ExampleApp(Frame):
         Frame.__init__(self, master=None)
         self.x = self.y = 0
         self.x_end = self.y_end = 0
-        self.canvas = Canvas(master, height=800, width=600, cursor="cross")
+        self.canvas = Canvas(master, height=800, width=580, cursor="cross")
 
         self.canvas.place(x=0, y=0)
 
@@ -28,6 +31,8 @@ class ExampleApp(Frame):
 
         self.tk_im = None
         self.img_source = None
+
+        self.out_image= None
         # self.canvas.create_image(0, 0, anchor="nw", image=self.tk_im)
 
     def on_button_press(self, event):
@@ -36,8 +41,6 @@ class ExampleApp(Frame):
         self.start_x = event.x
         self.start_y = event.y
 
-        # create rectangle if not yet exist
-        # if not self.rect:
         self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, fill='', outline='red')
 
     def on_move_press(self, event):
@@ -50,6 +53,19 @@ class ExampleApp(Frame):
         print('heel')
         pass
 
+def save():
+   path = filedialog.asksaveasfile(initialdir = "/",title = "Select file",filetypes = (("jpeg files","*.jpg"),("all files","*.*")),defaultextension='.jpg')
+   img = app.out_image
+   print(path)
+
+   red, green, blue = cv2.split(img)
+   image = cv2.merge((red, green, blue))
+   img = Image.fromarray(image)
+
+   img.save(path)
+
+   print(path)
+
 
 def upload_file(app):
     f_types = [('Jpg Files', '*.jpg'),
@@ -60,8 +76,8 @@ def upload_file(app):
     first_image = filename[0]
 
     img = Image.open(first_image)  # read the image file
-    img_source = ImageTk.PhotoImage(img)
-    app.img_source = img_source
+
+    app.img_source = img
 
     img2 = img.resize((576, 818))
     img2 = ImageTk.PhotoImage(img2)
@@ -76,17 +92,26 @@ def load_img(event):
     cs = mylist.curselection()
     f = mylist.get(cs)
     img = Image.open(f)  # read the image file
-    img_source = ImageTk.PhotoImage(img)
-
-    app.img_source = img_source
+    app.img_source = img
     img = img.resize((576, 818))  # new width & height
     img = ImageTk.PhotoImage(img)
     app.tk_im = img
     app.canvas.create_image(0, 0, anchor="nw", image=app.tk_im)
 
 
-def crop(event):
-    left, upper, right, lower = app.start_x, app.start_y,app.x_end,app.start_y
+def crop():
+    left, upper, right, lower = app.start_x, app.start_y, app.x_end, app.y_end
+    w,h=app.img_source.size
+
+    app.img_source.save("geeks0.jpg")
+    app.img_source = app.img_source.crop(((left/576)*w, (upper/818)*h, (right/576)*w, (lower/818)*h))
+    app.img_source = app.img_source.resize((576, 818))
+    app.img_source.save("geeks.jpg")
+
+    img = ImageTk.PhotoImage(app.img_source)
+    app.tk_im = img
+    app.canvas.create_image(0, 0, anchor="nw", image=app.tk_im)
+
 
 
 
@@ -100,14 +125,17 @@ def np2imgtk(image):
 
 
 def dewarp():
-    width, height = app.img_source._PhotoImage__size
+    image = ImageTk.PhotoImage(app.img_source)
+    width, height = image._PhotoImage__size
     rgb = np.empty((height, width, 3))
     for j in range(height):
         for i in range(width):
-            rgb[j, i, :] = app.img_source._PhotoImage__photo.get(x=i, y=j)
+            rgb[j, i, :] = image._PhotoImage__photo.get(x=i, y=j)
     new_image = Image.fromarray(rgb.astype('uint8'))
     new_image = np.array(new_image)
     img_soure, img_dewarping = model.dewarp_predict(new_image)
+
+    app.out_image = img_dewarping
     if CheckVar1.get() == 1:
         img_soure = np2imgtk(img_soure)
         app.tk_im = img_soure
@@ -123,8 +151,8 @@ if __name__ == "__main__":
     my_w = tk.Tk()
     my_w.geometry("1900x980")  # Size of the window
     labelframe = Frame(my_w,
-                       height=820,
-                       width=615,
+                       height=830,
+                       width=600,
                        borderwidth=10,
                        relief="groove")
     labelframe.place(x=13, y=61)
@@ -133,7 +161,7 @@ if __name__ == "__main__":
     app.place(x=0, y=0)
 
     labelframe2 = Frame(my_w,
-                        height=800,
+                        height=830,
                         width=600,
                         borderwidth=10,
                         relief="groove")
@@ -187,7 +215,18 @@ if __name__ == "__main__":
                    text='crop',
                    height=2,
                    width=5,
+                   command=lambda : crop()
                    )
     b2.place(x=1383, y=630)
+
+
+    save_button = tk.Button(my_w,
+                   text='save',
+                   height=2,
+                   width=5,
+                   command=lambda : save()
+                   )
+
+    save_button.place(x=1453, y=630)
     mylist.bind('<Double-1>', load_img)
     my_w.mainloop()
