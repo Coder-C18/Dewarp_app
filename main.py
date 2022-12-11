@@ -5,41 +5,69 @@ from PIL import Image, ImageTk
 import numpy as np
 import cv2
 from dewarping import Dewarping
-
-x_start, y_start, x_end, y_end = 0, 0, 0, 0
-
-def on_button_press( event):
-    x_start, y_start=event.x,event.y
-    canvas.create_image(0, 0, image=e1.image, anchor="nw")
-    canvas.create_rectangle(  x_start, y_start, event.x+100,event.y+100, outline='red')
+import PIL.Image
 
 
-def on_move_press( event):
-    x_end, y_end = event.x, event.y
-    canvas.create_image(0, 0, image=e1.image, anchor="nw")
-    print(x_start, y_start)
-    canvas.create_rectangle(x_start, y_start,  x_end, y_end, outline='red')
+class ExampleApp(Frame):
+    def __init__(self, master):
+        Frame.__init__(self, master=None)
+        self.x = self.y = 0
+        self.x_end = self.y_end = 0
+        self.canvas = Canvas(master, height=800, width=600, cursor="cross")
 
-    # w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
-    # if event.x > 0.9 * w:
-    #     self.canvas.xview_scroll(1, 'units')
-    # elif event.x < 0.1 * w:
-    #     self.canvas.xview_scroll(-1, 'units')
-    # if event.y > 0.9 * h:
-    #     self.canvas.yview_scroll(1, 'units')
-    # elif event.y < 0.1 * h:
-    #     self.canvas.yview_scroll(-1, 'units')
-    #
-    # # expand rectangle as you drag the mouse
-    # self.canvas.coords(self.rect, self.start_x, self.start_y, curX, curY)
+        self.canvas.place(x=0, y=0)
+
+        self.canvas.bind("<ButtonPress-1>", self.on_button_press)
+        self.canvas.bind("<B1-Motion>", self.on_move_press)
+        self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+
+        self.rect = None
+
+        self.start_x = None
+        self.start_y = None
+
+        self.tk_im = None
+        self.img_source = None
+        # self.canvas.create_image(0, 0, anchor="nw", image=self.tk_im)
+
+    def on_button_press(self, event):
+        self.canvas.delete(self.rect)
+        # save mouse drag start position
+        self.start_x = event.x
+        self.start_y = event.y
+
+        # create rectangle if not yet exist
+        # if not self.rect:
+        self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, fill='', outline='red')
+
+    def on_move_press(self, event):
+        self.x_end, self.y_end = (event.x, event.y)
+
+        # expand rectangle as you drag the mouse
+        self.canvas.coords(self.rect, self.start_x, self.start_y, self.x_end, self.y_end)
+
+    def on_button_release(self, event):
+        print('heel')
+        pass
 
 
-def upload_file(e1):
+def upload_file(app):
     f_types = [('Jpg Files', '*.jpg'),
                ('PNG Files', '*.png')]  # type of files to select
     filename = tk.filedialog.askopenfilename(multiple=True, filetypes=f_types)
     for f in filename:
         mylist.insert(END, f)
+    first_image = filename[0]
+
+    img = Image.open(first_image)  # read the image file
+    img_source = ImageTk.PhotoImage(img)
+    app.img_source = img_source
+
+    img2 = img.resize((576, 818))
+    img2 = ImageTk.PhotoImage(img2)
+    app.tk_im = img2
+    app.canvas.create_image(0, 0, anchor="nw", image=app.tk_im)
+
     scrollbar.config(command=mylist.yview)
     return 1
 
@@ -48,16 +76,18 @@ def load_img(event):
     cs = mylist.curselection()
     f = mylist.get(cs)
     img = Image.open(f)  # read the image file
-    img2 = img.resize((992, 992))
-    img2 = ImageTk.PhotoImage(img2)
-    e3.config(image=img2)
-    e3.image = img2
+    img_source = ImageTk.PhotoImage(img)
+
+    app.img_source = img_source
     img = img.resize((576, 818))  # new width & height
     img = ImageTk.PhotoImage(img)
-    e1.config(image=img)
-    e1.image = img
-    # canvas.create_image(0, 0, image=img, anchor="nw")
-    # a = canvas.create_rectangle(50, 0, 100, 500)
+    app.tk_im = img
+    app.canvas.create_image(0, 0, anchor="nw", image=app.tk_im)
+
+
+def crop(event):
+    left, upper, right, lower = app.start_x, app.start_y,app.x_end,app.start_y
+
 
 
 def np2imgtk(image):
@@ -69,19 +99,19 @@ def np2imgtk(image):
     return im
 
 
-def upload_file1():
-    width, height = e3.image._PhotoImage__size
+def dewarp():
+    width, height = app.img_source._PhotoImage__size
     rgb = np.empty((height, width, 3))
     for j in range(height):
         for i in range(width):
-            rgb[j, i, :] = e3.image._PhotoImage__photo.get(x=i, y=j)
+            rgb[j, i, :] = app.img_source._PhotoImage__photo.get(x=i, y=j)
     new_image = Image.fromarray(rgb.astype('uint8'))
     new_image = np.array(new_image)
     img_soure, img_dewarping = model.dewarp_predict(new_image)
-    if CheckVar1.get()==1:
+    if CheckVar1.get() == 1:
         img_soure = np2imgtk(img_soure)
-        e1.config(image=img_soure)
-        e1.image = img_soure
+        app.tk_im = img_soure
+        app.canvas.create_image(0, 0, anchor="nw", image=app.tk_im)
     imgtk = np2imgtk(img_dewarping)
     e2.config(image=imgtk)
     e2.image = imgtk
@@ -93,24 +123,22 @@ if __name__ == "__main__":
     my_w = tk.Tk()
     my_w.geometry("1900x980")  # Size of the window
     labelframe = Frame(my_w,
-                       height=900,
-                       width=600,
+                       height=820,
+                       width=615,
                        borderwidth=10,
                        relief="groove")
     labelframe.place(x=13, y=61)
-    e1 = tk.Label(labelframe)
-    e1.place(x=0, y=0)
-    canvas = Canvas( labelframe, width=600, height=900)
-    canvas.place(x=0, y=0)
 
-
+    app = ExampleApp(labelframe)
+    app.place(x=0, y=0)
 
     labelframe2 = Frame(my_w,
-                        height=900,
+                        height=800,
                         width=600,
                         borderwidth=10,
                         relief="groove")
     labelframe2.place(x=698, y=61)
+
     e2 = tk.Label(labelframe2)
     e2.place(x=0, y=0)
     e3 = tk.Label(my_w)
@@ -134,7 +162,7 @@ if __name__ == "__main__":
                               background="red",
                               height=5,
                               width=65,
-                              command=lambda: upload_file1())
+                              command=lambda: dewarp())
     dewarp_button.place(x=1383, y=789)
 
     CheckVar1 = IntVar()
@@ -152,83 +180,14 @@ if __name__ == "__main__":
                    # background="purple",
                    height=2,
                    width=65,
-                   command=lambda: upload_file(e1))
+                   command=lambda: upload_file(app))
     b1.place(x=1383, y=581)
-    mylist.bind('<Double-1>', load_img)
-    canvas.bind("<ButtonPress-1>", on_button_press)
-    canvas.bind("<B1-Motion>", on_move_press)
-    my_w.mainloop()
 
-# import PIL.Image
-# from PIL import Image, ImageTk
-# from tkinter import *
-#
-#
-# class ExampleApp(Frame):
-#     def __init__(self,master):
-#         Frame.__init__(self,master=None)
-#         self.x = self.y = 0
-#         self.canvas = Canvas(self,  cursor="cross")
-#         #
-#         # self.sbarv=Scrollbar(self,orient=VERTICAL)
-#         # self.sbarh=Scrollbar(self,orient=HORIZONTAL)
-#         # self.sbarv.config(command=self.canvas.yview)
-#         # self.sbarh.config(command=self.canvas.xview)
-#         #
-#         # self.canvas.config(yscrollcommand=self.sbarv.set)
-#         # self.canvas.config(xscrollcommand=self.sbarh.set)
-#
-#         self.canvas.grid(row=0,column=0,sticky=N+S+E+W)
-#         # self.sbarv.grid(row=0,column=1,stick=N+S)
-#         # self.sbarh.grid(row=1,column=0,sticky=E+W)
-#
-#         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-#         self.canvas.bind("<B1-Motion>", self.on_move_press)
-#         # self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
-#
-#         self.rect = None
-#
-#         self.start_x = None
-#         self.start_y = None
-#
-#         self.im = PIL.Image.open("51_1 copy.png")
-#         self.wazil,self.lard=self.im.size
-#         self.canvas.config(scrollregion=(0,0,self.wazil,self.lard))
-#         self.tk_im = ImageTk.PhotoImage(self.im)
-#         self.canvas.create_image(0,0,anchor="nw",image=self.tk_im)
-#
-#
-#     def on_button_press(self, event):
-#         # save mouse drag start position
-#         self.start_x = self.canvas.canvasx(event.x)
-#         self.start_y = self.canvas.canvasy(event.y)
-#
-#         # create rectangle if not yet exist
-#         if not self.rect:
-#             self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red')
-#
-#     def on_move_press(self, event):
-#         curX = self.canvas.canvasx(event.x)
-#         curY = self.canvas.canvasy(event.y)
-#
-#         w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
-#         if event.x > 0.9*w:
-#             self.canvas.xview_scroll(1, 'units')
-#         elif event.x < 0.1*w:
-#             self.canvas.xview_scroll(-1, 'units')
-#         if event.y > 0.9*h:
-#             self.canvas.yview_scroll(1, 'units')
-#         elif event.y < 0.1*h:
-#             self.canvas.yview_scroll(-1, 'units')
-#
-#         # expand rectangle as you drag the mouse
-#         self.canvas.coords(self.rect, self.start_x, self.start_y, curX, curY)
-#
-#     def on_button_release(self, event):
-#         pass
-#
-# if __name__ == "__main__":
-#     root=Tk()
-#     app = ExampleApp(root)
-#     app.pack()
-#     root.mainloop()
+    b2 = tk.Button(my_w,
+                   text='crop',
+                   height=2,
+                   width=5,
+                   )
+    b2.place(x=1383, y=630)
+    mylist.bind('<Double-1>', load_img)
+    my_w.mainloop()
