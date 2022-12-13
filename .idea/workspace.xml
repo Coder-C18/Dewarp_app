@@ -5,12 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2a72466c-9278-48af-9e0f-837e6aba4550" name="Changes" comment="Oki">
-      <changelist_data name="FamCao" email="cao2000nt@gmail.com" />
-      <change beforePath="$PROJECT_DIR$/.idea/Dewarp_app.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Dewarp_app.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dewarping.py" beforeDir="false" afterPath="$PROJECT_DIR$/dewarping.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -100,8 +95,8 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.dewarping" />
       <item itemvalue="Python.main" />
+      <item itemvalue="Python.dewarping" />
     </list>
     <recent_temporary>
       <list>
@@ -139,6 +134,28 @@
       <workItem from="1670428480770" duration="7861000" />
       <workItem from="1670436350487" duration="27000" />
     </task>
+    <task id="LOCAL-00001" summary="Oki">
+      <created>1670802232422</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1670802232422</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Oki">
+      <created>1670802282856</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1670802282856</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Oki">
+      <created>1670802289551</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1670802289551</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
